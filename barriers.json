@@ -1,0 +1,272 @@
+[
+  {
+    "lat": 12.972,
+    "lon": 77.594,
+    "note": "Legacy form obstacle",
+    "category": "Other obstacle",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.972,
+    "lon": 77.594,
+    "note": "Legacy form obstacle",
+    "category": "Other obstacle",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.972,
+    "lon": 77.594,
+    "note": "Legacy form obstacle",
+    "category": "Other obstacle",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.972,
+    "lon": 77.594,
+    "note": "Legacy form obstacle",
+    "category": "Other obstacle",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 2 automated barrier test obstacle",
+    "category": "Broken pavement / deep ditch",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 4
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 3 acceptance test obstacle: high lip edge > 10cm",
+    "category": "Broken ramp",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 4
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 2
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 3 acceptance test obstacle: high lip edge > 10cm",
+    "category": "Broken ramp",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 4
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 5
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 2 automated barrier test obstacle",
+    "category": "Broken pavement / deep ditch",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 6
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 7
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 2 automated barrier test obstacle",
+    "category": "Broken pavement / deep ditch",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 8
+  },
+  {
+    "lat": 12.97167185,
+    "lon": 77.5952994,
+    "note": "Phase 3 acceptance test obstacle: high lip edge > 10cm",
+    "category": "Broken ramp",
+    "image_filename": null,
+    "status": "resolved",
+    "verification_status": "community_reported",
+    "id": 9
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 9
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 11
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 13
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 15
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 17
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 19
+  },
+  {
+    "lat": 12.973,
+    "lon": 77.595,
+    "note": "Sidewalk closed due to cable trenching",
+    "category": "Construction",
+    "image_filename": null,
+    "status": "active",
+    "verification_status": "community_reported",
+    "id": 21
+  }
+]

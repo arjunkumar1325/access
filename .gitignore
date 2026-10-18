@@ -1,0 +1,28 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Flask & SQLite instances
+instance/
+*.db
+*.sqlite3
+
+# Uploaded dynamic photos (preserve sample photos, ignore dynamic uploads)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment configs with secrets
+.env

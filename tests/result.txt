@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+    t.test_homepage_loads_immediately()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Arjun Kumar A S\OneDrive\Desktop\ibm\tests\test_phase1_homepage.py", line 37, in test_homepage_loads_immediately
+    self.assertIn('Accessible journeys. Greater independence.', html)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Arjun Kumar A S\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 1174, in assertIn
+    self.fail(self._formatMessage(msg, standardMsg))
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Arjun Kumar A S\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 732, in fail
+    raise self.failureException(msg)

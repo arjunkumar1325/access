@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessAI — Intelligent Accessible Route Planning</title>
+    <meta name="description" content="Wheelchair-accessible route planner avoiding stairs, blocked paths, and rough surfaces with real-time community barrier reporting.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Top Application Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="4" r="2"></circle>
+                        <path d="M14 13l2 2 4-4"></path>
+                        <path d="M7 13h5l2 6"></path>
+                        <circle cx="8" cy="18" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>AccessAI</h1>
+                    <span class="brand-tagline">Intelligent Accessible Route Planning</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-ai" aria-label="Open AI Photo Analyzer">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>AI Photo Scanner</span>
+                </button>
+
+                <button type="button" class="btn btn-danger btn-sm" id="btn-open-report" aria-label="Report a Barrier">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Report Barrier</span>
+                </button>
+
+                {% if current_user %}
+                <div class="header-user-section" id="header-user-badge">
+                    <div class="user-pill" title="{{ current_user.email }}">
+                        <span class="user-avatar-circle" aria-hidden="true">{{ current_user.full_name[:1].upper() }}</span>
+                        <span class="user-pill-name">{{ current_user.full_name.split()[0] }}</span>
+                    </div>
+                    <form action="{{ url_for('logout') }}" method="POST" class="auth-logout-form" style="margin: 0; display: inline;">
+                        <button type="submit" class="btn btn-secondary btn-sm btn-logout" aria-label="Sign out of AccessAI">
+                            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm btn-nav-login" aria-label="Sign In to AccessAI">
+                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    <span>Sign In</span>
+                </a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Main Body: Sidebar + Interactive Map -->
+        <main class="app-main">
+            <!-- Sidebar Navigation & Routing Controls -->
+            <aside class="app-sidebar" id="app-sidebar" aria-label="Route Planning Controls">
+                <div class="sidebar-scrollable">
+                    <!-- Active Map Coverage Area Banner -->
+                    <div class="panel-section coverage-card" id="coverage-card">
+                        <div class="coverage-header">
+                            <span class="coverage-label">Loaded Network Area</span>
+                            <span class="badge-status-online">Active Graph</span>
+                        </div>
+                        <div class="coverage-name" id="coverage-area-name">{{ area_name }}</div>
+                        <div class="coverage-details text-xs text-muted">
+                            Bounds: [{{ min_lat|round(4) }}, {{ min_lon|round(4) }}] to [{{ max_lat|round(4) }}, {{ max_lon|round(4) }}]
+                        </div>
+                        <div class="coverage-dynamic-tag text-xs" style="color: var(--color-teal-accent); font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 5px;">
+                            <span aria-hidden="true">🌐</span> Dynamic Area Loading: Enabled
+                        </div>
+                    </div>
+
+
+                    <!-- Location Input Form -->
+                    <form id="route-form" class="panel-section route-form" onsubmit="return false;">
+                        <div class="locations-card">
+                            <!-- Start Point -->
+                            <div class="input-row">
+                                <div class="location-icon start-icon" title="Starting Location" aria-hidden="true">
+                                    <span>A</span>
+                                </div>
+                                <div class="input-wrapper">
+                                    <input type="text" id="start-input" class="form-input" 
+                                           placeholder="Enter place name or lat, lon..." 
+                                           autocomplete="off" required>
+                                    <div id="start-suggestions" class="suggestions-dropdown hidden" role="listbox"></div>
+                                    <div class="input-actions">
+                                        <button type="button" class="icon-btn" id="btn-locate-start" title="Use current GPS location" aria-label="Use current location for start">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="icon-btn pick-btn" id="btn-pick-start" title="Pick start point by clicking map" aria-label="Pick start on map">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Swap Locations Button -->
+                            <div class="swap-row">
+                                <div class="line-connector"></div>
+                                <button type="button" class="swap-btn" id="btn-swap-locations" title="Swap Start and Destination" aria-label="Swap locations">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <polyline points="17 14 12 9 7 14"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Destination Point -->
+                            <div class="input-row">
+                                <div class="location-icon end-icon" title="Destination" aria-hidden="true">
+                                    <span>B</span>
+                                </div>
+                                <div class="input-wrapper">
+                                    <input type="text" id="end-input" class="form-input" 
+                                           placeholder="Enter destination place name or lat, lon..." 
+                                           autocomplete="off" required>
+                                    <div id="end-suggestions" class="suggestions-dropdown hidden" role="listbox"></div>
+                                    <div class="input-actions">
+                                        <button type="button" class="icon-btn pick-btn" id="btn-pick-end" title="Pick destination point by clicking map" aria-label="Pick destination on map">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                <circle cx="12" cy="10" r="3"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Route Mode Selector -->
+                        <div class="mode-selector-group">
+                            <span class="field-label">Route Mode</span>
+                            <div class="mode-toggle-container" role="radiogroup" aria-label="Route Mode">
+                                <button type="button" class="mode-toggle-btn active" id="btn-mode-accessible" data-mode="accessible" role="radio" aria-checked="true">
+                                    <span class="mode-icon">♿</span>
+                                    <span class="mode-details">
+                                        <span class="mode-title">Accessible</span>
+                                        <span class="mode-subtitle">Bypasses stairs & hazards</span>
+                                    </span>
+                                </button>
+                                <button type="button" class="mode-toggle-btn" id="btn-mode-shortest" data-mode="shortest" role="radio" aria-checked="false">
+                                    <span class="mode-icon">🚶</span>
+                                    <span class="mode-details">
+                                        <span class="mode-title">Shortest</span>
+                                        <span class="mode-subtitle">Direct walking distance</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Form Buttons -->
+                        <div class="route-actions">
+                            <button type="submit" class="btn btn-primary" id="btn-find-route">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                </svg>
+                                <span>Find Accessible Route</span>
+                            </button>
+                            <button type="button" class="btn btn-ghost" id="btn-clear-route" title="Reset map and inputs">
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Spatial Out-Of-Bounds & Disconnected Error Callout -->
+                    <div id="route-error-banner" class="alert-box alert-danger hidden" role="alert">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-content">
+                            <strong id="route-error-title">Routing Error</strong>
+                            <p id="route-error-msg" class="text-xs"></p>
+                            <div id="route-error-advice" class="alert-advice text-xs mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Active Route Picking Status Banner -->
+                    <div id="picking-mode-banner" class="picking-banner hidden">
+                        <span id="picking-mode-text">Click anywhere on the map to set location</span>
+                        <button type="button" class="btn-link" id="btn-cancel-pick">Cancel</button>
+                    </div>
+
+                    <!-- Initial Welcome & Guidance Panel (Shown before a route is selected) -->
+                    <section id="welcome-panel" class="panel-section welcome-section" aria-label="Welcome and Navigation Guidance">
+                        <div class="welcome-card">
+                            <div class="welcome-header">
+                                <div class="welcome-icon-badge" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.2" fill="none">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                        <polyline points="9 12 12 15 16 10"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="welcome-header-text">
+                                    <h2 class="welcome-title">Plan a safer, more accessible journey.</h2>
+                                    <p class="welcome-subtitle">Smart pedestrian navigation tailored for wheelchair users and mobility equipment.</p>
+                                </div>
+                            </div>
+
+                            <div class="welcome-features">
+                                <div class="welcome-feat-item">
+                                    <span class="feat-icon" aria-hidden="true">♿</span>
+                                    <div class="feat-text">
+                                        <strong>Step-Free Routing</strong>
+                                        <span>Bypasses stairs, steep ramps, and unpaved terrain using real OpenStreetMap data.</span>
+                                    </div>
+                                </div>
+                                <div class="welcome-feat-item">
+                                    <span class="feat-icon" aria-hidden="true">⚠️</span>
+                                    <div class="feat-text">
+                                        <strong>Community Barrier Alerts</strong>
+                                        <span>Active hazard reports automatically detour wheelchairs around obstacles.</span>
+                                    </div>
+                                </div>
+                                <div class="welcome-feat-item">
+                                    <span class="feat-icon" aria-hidden="true">📍</span>
+                                    <div class="feat-text">
+                                        <strong>Interactive Selection</strong>
+                                        <span>Enter real place names, type GPS coordinates, or click directly on the map.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="welcome-action-row">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-welcome-report-barrier">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <span>Report a Barrier</span>
+                                </button>
+                                <span class="welcome-coverage-note">Loaded Area: {{ area_name }}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Route Results & Accessibility Comparison -->
+                    <section id="route-results" class="panel-section results-section hidden" aria-live="polite">
+                        <!-- Heading matching requirement: Wheelchair-accessible route -->
+                        <div class="results-header-block">
+                            <h2 class="section-title" id="route-heading">Wheelchair-accessible route</h2>
+                            <span class="route-tag-verified" id="route-subtitle-status">Verified Accessible Network</span>
+                        </div>
+
+                        <!-- Accessibility Mode Selector Chips -->
+                        <div class="access-mode-selector" role="radiogroup" aria-label="Accessibility Mode">
+                            <button type="button" class="access-chip active" id="chip-mode-wheelchair" data-profile="wheelchair" role="radio" aria-checked="true">
+                                <span class="chip-icon">♿</span>
+                                <span class="chip-text">Wheelchair Mode</span>
+                            </button>
+                            <button type="button" class="access-chip" id="chip-mode-low-vision" data-profile="low-vision" role="radio" aria-checked="false" title="High contrast view with audio announcements">
+                                <span class="chip-icon">👁️</span>
+                                <span class="chip-text">Low-Vision Mode <span class="prototype-tag">Prototype</span></span>
+                            </button>
+                        </div>
+
+                        <!-- Route Option Selector: Safest Available vs Shortest Route -->
+                        <div class="route-type-toggle" role="radiogroup" aria-label="Route Optimization Choice">
+                            <button type="button" class="route-type-btn active" id="btn-select-safest" role="radio" aria-checked="true">
+                                <span class="route-type-indicator"></span>
+                                <span class="route-type-label">Safest Available Route</span>
+                            </button>
+                            <button type="button" class="route-type-btn" id="btn-select-shortest" role="radio" aria-checked="false">
+                                <span class="route-type-indicator"></span>
+                                <span class="route-type-label">Shortest Route</span>
+                            </button>
+                        </div>
+
+                        <!-- Primary Route Metrics Card -->
+                        <div class="route-card accessible-card active" id="card-accessible">
+                            <div class="route-card-header">
+                                <div class="route-badge badge-accessible" id="card-badge-status">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    <span id="card-status-text">Accessible Route</span>
+                                </div>
+                                <span class="route-pill pill-green" id="card-pill-tag">Bypasses Stairs & Hazards</span>
+                            </div>
+
+                            <div class="route-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Estimated Walking Time</span>
+                                    <span class="stat-val" id="accessible-time">-- min</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Calculated Distance</span>
+                                    <span class="stat-val" id="accessible-distance">-- m</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Stairs Avoided</span>
+                                    <span class="stat-val text-success" id="accessible-stairs">-- Steps</span>
+                                </div>
+                            </div>
+
+                            <!-- Speed Basis Notice -->
+                            <div class="route-speed-basis text-xs text-muted" id="route-speed-basis">
+                                Calculated at 1.0 m/s standard wheelchair travel pace.
+                            </div>
+
+                            <!-- Why this route explanation -->
+                            <div class="route-reasons" id="route-reasons-list">
+                                <!-- Populated dynamically from backend response -->
+                            </div>
+                        </div>
+
+                        <!-- Standard Shortest Distance Card for Comparison -->
+                        <div class="route-card shortest-card" id="card-shortest">
+                            <div class="route-card-header">
+                                <span class="route-type-title">Standard Shortest Route</span>
+                                <span class="route-pill pill-amber" id="shortest-hazard-pill">Direct Line</span>
+                            </div>
+                            <div class="route-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Distance</span>
+                                    <span class="stat-val" id="shortest-distance">-- m</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Stair Flights</span>
+                                    <span class="stat-val text-danger" id="shortest-stairs">--</span>
+                                </div>
+                            </div>
+                            <p class="shortest-note">Direct path ignores steps and rough ground.</p>
+                        </div>
+
+                        <!-- Action Buttons: Start Navigation, Safety Details, Report Barrier -->
+                        <div class="result-action-grid">
+                            <button type="button" class="btn btn-primary btn-action-main" id="btn-start-navigation">
+                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none">
+                                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                </svg>
+                                <span>Start Navigation</span>
+                            </button>
+                            <div class="action-sub-row">
+                                <button type="button" class="btn btn-secondary btn-action-sub" id="btn-open-safety-details">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg>
+                                    <span>Safety Details</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-action-sub" id="btn-route-report-barrier">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                                        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                    </svg>
+                                    <span>Report Barrier</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Warnings & Accessibility Caveats based on real data -->
+                        <div class="disclaimer-box" id="route-warnings">
+                            <div class="disclaimer-header">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <strong>Important Accessibility Notice</strong>
+                            </div>
+                            <ul id="warnings-list">
+                                <!-- Populated dynamically from backend response -->
+                            </ul>
+                        </div>
+                    </section>
+
+                    <!-- Community Barriers List in Area -->
+                    <section class="panel-section barriers-summary-section">
+                        <div class="section-header-flex">
+                            <h2 class="section-title">Community Barriers</h2>
+                            <span class="barrier-count-badge" id="barrier-count">0 Active</span>
+                        </div>
+                        <p class="text-muted text-sm">Reported hazards automatically penalize routing to navigate wheelchairs safely around obstacles.</p>
+                        <div id="barriers-quick-list" class="barriers-quick-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </section>
+
+                    <!-- Explicitly Labeled Demo Mode (Evaluation Only) -->
+                    <details class="panel-section demo-mode-section" id="demo-mode-details">
+                        <summary class="demo-mode-summary">
+                            <span class="demo-tag">DEMO MODE</span>
+                            <span>Evaluation Sample Coordinates</span>
+                        </summary>
+                        <p class="text-xs text-muted mt-2">
+                            Predefined sample locations within the loaded campus area for evaluation and testing.
+                        </p>
+                        <div class="preset-row mt-2">
+                            <select id="demo-presets" class="form-select text-xs" aria-label="Select sample location pair">
+                                <option value="">-- Choose Sample Demo Coordinates --</option>
+                                <option value="preset-1">Sample 1: East Gate &rarr; Central Library</option>
+                                <option value="preset-2">Sample 2: Science Block &rarr; Cafeteria</option>
+                                <option value="preset-3">Sample 3: Sports Complex &rarr; Admin Building</option>
+                            </select>
+                        </div>
+                    </details>
+                </div>
+            </aside>
+
+            <!-- Map View Container -->
+            <section class="map-container" aria-label="Interactive Accessible Map">
+                <div id="map" class="leaflet-map" tabindex="0"></div>
+
+                <!-- Navigation Step-by-Step Overlay (Turn guidance and live GPS) -->
+                <div id="nav-turn-overlay" class="nav-overlay hidden" aria-live="assertive" role="region" aria-label="Step-by-Step Navigation Guidance">
+                    <div class="nav-overlay-card">
+                        <div class="nav-step-header">
+                            <div class="nav-turn-icon-box" id="nav-step-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none">
+                                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                                    <polyline points="5 12 12 5 19 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="nav-step-info">
+                                <div class="nav-distance-callout" id="nav-step-distance">In 45 meters</div>
+                                <div class="nav-instruction-text" id="nav-step-instruction">Depart along Accessible Pathway</div>
+                            </div>
+                            <button type="button" class="btn-nav-close" id="btn-stop-navigation" aria-label="Stop Navigation">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>Stop</span>
+                            </button>
+                        </div>
+                        <div class="nav-step-footer">
+                            <div class="nav-progress-text">
+                                <span id="nav-current-step-index">Step 1 of 5</span>
+                                <span class="nav-dot">•</span>
+                                <span id="nav-gps-indicator">GPS Standby (Device Location)</span>
+                            </div>
+                            <div class="nav-step-controls">
+                                <button type="button" class="btn-nav-step" id="btn-nav-prev" aria-label="Previous navigation step">‹ Prev</button>
+                                <button type="button" class="btn-nav-step" id="btn-nav-next" aria-label="Next navigation step">Next ›</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Map Controls -->
+                <div class="floating-map-controls">
+                    <button type="button" class="floating-btn" id="btn-recenter-map" title="Recenter on Campus" aria-label="Recenter Map">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <button type="button" class="floating-btn" id="btn-toggle-barriers-layer" title="Toggle Barrier Markers" aria-label="Toggle Barrier Markers">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Map Legend -->
+                <div class="map-legend" id="map-legend">
+                    <div class="legend-header">
+                        <span class="legend-title">Map Legend</span>
+                        <button type="button" class="btn-legend-report" id="btn-legend-report-barrier" title="Report a hazard or obstacle on the map">
+                            <span>+ Report Barrier</span>
+                        </button>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line line-green"></span>
+                        <span>Accessible Route (Wheelchair)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line line-dashed"></span>
+                        <span>Shortest Route (May have stairs)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-pin pin-blue"></span>
+                        <span>Start Location (A)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-pin pin-red"></span>
+                        <span>Destination (B)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-pin pin-amber"></span>
+                        <span>Reported Barrier / Hazard</span>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner Overlay -->
+                <div id="loading-overlay" class="loading-overlay hidden">
+                    <div class="spinner"></div>
+                    <span id="loading-text">Calculating accessible route...</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 1: REPORT A BARRIER DIALOG                         -->
+    <!-- ======================================================== -->
+    <dialog id="barrier-modal" class="app-modal" aria-labelledby="modal-barrier-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-badge badge-danger">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h2 id="modal-barrier-title" class="modal-title">Report Accessibility Barrier</h2>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-barrier-modal" aria-label="Close dialog">&times;</button>
+            </div>
+
+            <form id="barrier-form" class="modal-body" enctype="multipart/form-data">
+                <p class="modal-desc">
+                    Help your campus community! Reporting stairs, broken ramps, construction, or impassable sidewalks immediately updates the routing engine to detour wheelchairs safely.
+                </p>
+
+                <!-- Category -->
+                <div class="form-group">
+                    <label for="barrier-category" class="form-label">Barrier Category <span class="required">*</span></label>
+                    <select id="barrier-category" name="category" class="form-select" required>
+                        <option value="Stairs">Stairs / Flight of Steps</option>
+                        <option value="Blocked footpath">Blocked Footpath / Obstacle</option>
+                        <option value="Broken ramp">Broken or Steep Ramp</option>
+                        <option value="Rough surface">Rough / Unpaved Surface (Gravel, Mud)</option>
+                        <option value="Construction">Construction / Utility Work</option>
+                        <option value="Other obstacle" selected>Other Accessibility Obstacle</option>
+                    </select>
+                </div>
+
+                <!-- Coordinates -->
+                <div class="form-group">
+                    <div class="form-label-flex">
+                        <label for="barrier-lat" class="form-label">Location Coordinates <span class="required">*</span></label>
+                        <button type="button" class="btn-link text-xs" id="btn-click-map-barrier">
+                            Click on map to select spot
+                        </button>
+                    </div>
+                    <div class="coords-grid">
+                        <div>
+                            <input type="number" step="any" id="barrier-lat" name="lat" class="form-input" placeholder="Latitude (e.g. 12.9723)" required>
+                        </div>
+                        <div>
+                            <input type="number" step="any" id="barrier-lon" name="lon" class="form-input" placeholder="Longitude (e.g. 77.5948)" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="barrier-note" class="form-label">Description / Details</label>
+                    <textarea id="barrier-note" name="note" class="form-textarea" rows="3" 
+                              placeholder="e.g. Broken handrail with steep 10cm lip. No wheelchair access on west entrance."></textarea>
+                </div>
+
+                <!-- Optional Photo Upload -->
+                <div class="form-group">
+                    <label for="barrier-photo" class="form-label">Optional Photo Evidence</label>
+                    <input type="file" id="barrier-photo" name="photo" class="form-file" accept="image/*">
+                    <div id="barrier-photo-preview" class="photo-preview hidden">
+                        <img id="preview-img" alt="Uploaded obstacle preview" />
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-barrier">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="btn-submit-barrier">
+                        <span>Submit Barrier Report</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 2: AI IMAGE RECOGNITION (CLIP)                     -->
+    <!-- ======================================================== -->
+    <dialog id="ai-modal" class="app-modal" aria-labelledby="modal-ai-title">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-badge badge-teal">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </div>
+                    <h2 id="modal-ai-title" class="modal-title">AI Accessibility Photo Scanner</h2>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-ai-modal" aria-label="Close dialog">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <p class="modal-desc">
+                    Scan sidewalk, ramp, or stair photos using a pre-trained zero-shot vision model (CLIP). The model detects accessibility features to assist community reporting.
+                </p>
+
+                <div class="ai-upload-dropzone" id="ai-dropzone">
+                    <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="1.8" fill="none">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p class="dropzone-text"><strong>Click to browse</strong> or drag & drop a photo</p>
+                    <span class="text-xs text-muted">Supports JPG, PNG, WebP (Max 16MB)</span>
+                    <input type="file" id="ai-file-input" class="hidden-file-input" accept="image/*">
+                </div>
+
+                <div id="ai-image-preview-container" class="ai-preview-container hidden">
+                    <img id="ai-image-preview" alt="Selected photo for AI classification" />
+                </div>
+
+                <div id="ai-results-box" class="ai-results-box hidden">
+                    <div class="result-header">
+                        <span class="result-title">Classification Result</span>
+                        <span class="result-score" id="ai-result-confidence">--% confidence</span>
+                    </div>
+                    <div class="result-label" id="ai-result-label">--</div>
+                    <div class="ai-disclaimer">
+                        <strong>Honest AI Disclaimer:</strong> AI predictions may misclassify slope angles, small curb lips, or surface firmness. Never assume a route is accessible based solely on an image.
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm mt-3" id="btn-use-ai-in-report">
+                        Use in Barrier Report
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-close-ai-footer">Close</button>
+                <button type="button" class="btn btn-primary" id="btn-run-ai-scan" disabled>
+                    <span>Run AI Classification</span>
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 3: SAFETY & ACCESSIBILITY DETAILS                   -->
+    <!-- ======================================================== -->
+    <dialog id="safety-modal" class="app-modal" aria-labelledby="modal-safety-title">
+        <div class="modal-card modal-card-wide">
+            <div class="modal-header">
+                <div class="modal-title-flex">
+                    <div class="modal-badge badge-teal">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <h2 id="modal-safety-title" class="modal-title">Safety & Accessibility Verification</h2>
+                </div>
+                <button type="button" class="modal-close-btn" id="btn-close-safety-modal" aria-label="Close safety dialog">&times;</button>
+            </div>
+
+            <div class="modal-body" id="safety-modal-body">
+                <div class="safety-section">
+                    <h3 class="safety-subtitle">Route Selection Rationale</h3>
+                    <div id="safety-rationale-list" class="safety-callout-box">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="safety-grid mt-3">
+                    <div class="safety-grid-card">
+                        <span class="safety-card-label">Known Stairs Avoided</span>
+                        <span class="safety-card-value text-success" id="safety-stairs-count">0 Steps</span>
+                        <p class="text-xs text-muted mt-1">Stairs on direct path avoided by accessibility engine.</p>
+                    </div>
+                    <div class="safety-grid-card">
+                        <span class="safety-card-label">Rough Surfaces Avoided</span>
+                        <span class="safety-card-value text-warning" id="safety-rough-count">0 Sections</span>
+                        <p class="text-xs text-muted mt-1">Gravel, dirt, or cobblestones detoured.</p>
+                    </div>
+                </div>
+
+                <div class="safety-section mt-3">
+                    <h3 class="safety-subtitle">Active Community Barriers Nearby</h3>
+                    <div id="safety-barriers-list" class="safety-barriers-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div class="safety-section mt-3">
+                    <h3 class="safety-subtitle">Data Integrity & Unknowns Notice</h3>
+                    <div class="safety-notice-box">
+                        <p><strong>Verified OpenStreetMap Data:</strong> AccessAI never invents arbitrary "safety scores" (e.g. 88/100). Every routing decision is mathematically computed from verifiable OpenStreetMap tags and community-reported obstacles.</p>
+                        <p class="mt-2 text-xs text-muted" id="safety-unverified-note">
+                            Note: Some segments in the campus graph lack explicit <code>wheelchair=*</code> tags. Steeper curb cuts or temporary obstacles may not be recorded. Always exercise personal caution.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-close-safety-footer">Close</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Server Configuration passed via JSON script block for safe HTML/JS parsing -->
+    <script id="accessai-config-data" type="application/json">
+    {
+        "centerLat": {{ center_lat|tojson }},
+        "centerLon": {{ center_lon|tojson }},
+        "bounds": {
+            "minLat": {{ min_lat|tojson }},
+            "maxLat": {{ max_lat|tojson }},
+            "minLon": {{ min_lon|tojson }},
+            "maxLon": {{ max_lon|tojson }}
+        }
+    }
+    </script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

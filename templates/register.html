@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — AccessAI Intelligent Accessible Route Planning</title>
+    <meta name="description" content="Create a free AccessAI account to plan wheelchair-accessible routes, report pedestrian obstacles, and contribute to barrier-free cities.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Authentication Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="auth-page">
+    <!-- Accessible Map Background Graphic -->
+    <div class="auth-background" aria-hidden="true">
+        <div class="map-grid-pattern"></div>
+        <svg class="auth-map-routes" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M-50 450 C 250 400, 400 600, 720 520 C 1040 440, 1200 650, 1500 580" 
+                  stroke="url(#accessibleGrad)" stroke-width="4" stroke-dasharray="8 8" opacity="0.6"/>
+            <path d="M100 -50 C 300 200, 500 350, 720 520 C 900 680, 1100 750, 1350 950" 
+                  stroke="url(#tealGrad)" stroke-width="3" opacity="0.5"/>
+            <circle cx="720" cy="520" r="8" fill="#10b981" />
+            <circle cx="720" cy="520" r="18" stroke="#10b981" stroke-width="2" opacity="0.4" />
+            <circle cx="400" cy="600" r="6" fill="#06b6d4" />
+            <circle cx="1040" cy="440" r="6" fill="#10b981" />
+            <circle cx="300" cy="200" r="5" fill="#3b82f6" />
+            <circle cx="1200" cy="650" r="5" fill="#10b981" />
+
+            <defs>
+                <linearGradient id="accessibleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#06b6d4" />
+                    <stop offset="50%" stop-color="#10b981" />
+                    <stop offset="100%" stop-color="#059669" />
+                </linearGradient>
+                <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3b82f6" />
+                    <stop offset="100%" stop-color="#06b6d4" />
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="auth-header">
+        <a href="{{ url_for('index') }}" class="brand-link" aria-label="AccessAI Homepage and Map">
+            <div class="auth-logo-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="4" r="2"></circle>
+                    <path d="M14 13l2 2 4-4"></path>
+                    <path d="M7 13h5l2 6"></path>
+                    <circle cx="8" cy="18" r="3"></circle>
+                </svg>
+            </div>
+            <div>
+                <span class="auth-brand-name">AccessAI</span>
+                <span class="auth-brand-sub">Accessible journeys. Greater independence.</span>
+            </div>
+        </a>
+
+        <a href="{{ url_for('index') }}" class="back-to-map-link">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Map</span>
+        </a>
+    </header>
+
+    <!-- Main Registration Container -->
+    <main class="auth-main-container">
+        <section class="auth-card" aria-labelledby="register-heading">
+            <div class="auth-card-header">
+                <div class="auth-badge-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                </div>
+                <h1 id="register-heading" class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join AccessAI to navigate safely and contribute barrier-free routes.</p>
+            </div>
+
+            <!-- Flash & System Messages -->
+            <div class="auth-alert-container" aria-live="polite">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="auth-alert auth-alert-{{ category if category != 'error' else 'danger' }}" role="alert">
+                                <span class="auth-alert-icon" aria-hidden="true">
+                                    {% if category == 'success' %}
+                                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    {% elif category == 'info' %}
+                                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                    {% else %}
+                                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    {% endif %}
+                                </span>
+                                <div>{{ message }}</div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Registration Form -->
+            <form id="register-form" class="auth-form" action="{{ url_for('register') }}" method="POST" novalidate>
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="register-name" class="form-label">
+                        <span>Full Name <span class="form-label-required" aria-hidden="true">*</span></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon-left" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </span>
+                        <input type="text" 
+                               id="register-name" 
+                               name="full_name" 
+                               class="auth-input" 
+                               placeholder="e.g. Alex Morgan" 
+                               value="{{ full_name or '' }}" 
+                               autocomplete="name" 
+                               required 
+                               aria-describedby="register-name-error">
+                    </div>
+                    <div id="register-name-error" class="field-error-message" role="alert"></div>
+                </div>
+
+                <!-- Email Address -->
+                <div class="form-group">
+                    <label for="register-email" class="form-label">
+                        <span>Email Address <span class="form-label-required" aria-hidden="true">*</span></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon-left" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </span>
+                        <input type="email" 
+                               id="register-email" 
+                               name="email" 
+                               class="auth-input" 
+                               placeholder="you@example.com" 
+                               value="{{ email or '' }}" 
+                               autocomplete="email" 
+                               required 
+                               aria-describedby="register-email-error">
+                    </div>
+                    <div id="register-email-error" class="field-error-message" role="alert"></div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="register-password" class="form-label">
+                        <span>Password <span class="form-label-required" aria-hidden="true">*</span></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon-left" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+                        <input type="password" 
+                               id="register-password" 
+                               name="password" 
+                               class="auth-input" 
+                               placeholder="At least 8 characters" 
+                               autocomplete="new-password" 
+                               required 
+                               aria-describedby="register-password-error">
+                        <button type="button" 
+                                class="btn-toggle-password" 
+                                data-target="register-password" 
+                                aria-label="Show password" 
+                                aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Password Strength Meter -->
+                    <div id="password-strength-wrapper" class="password-strength-wrapper">
+                        <div class="strength-bar-track">
+                            <div class="strength-bar-fill"></div>
+                        </div>
+                        <span id="strength-text" class="strength-text">Minimum 8 characters with letters & numbers</span>
+                    </div>
+                    <div id="register-password-error" class="field-error-message" role="alert"></div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="register-confirm" class="form-label">
+                        <span>Confirm Password <span class="form-label-required" aria-hidden="true">*</span></span>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon-left" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+                        <input type="password" 
+                               id="register-confirm" 
+                               name="confirm_password" 
+                               class="auth-input" 
+                               placeholder="Re-enter your password" 
+                               autocomplete="new-password" 
+                               required 
+                               aria-describedby="register-confirm-error">
+                        <button type="button" 
+                                class="btn-toggle-password" 
+                                data-target="register-confirm" 
+                                aria-label="Show password" 
+                                aria-pressed="false">
+                            <svg class="icon-eye" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="icon-eye-off" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="register-confirm-error" class="field-error-message" role="alert"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btn-register-submit" class="btn-auth-submit">
+                    <span class="btn-spinner" aria-hidden="true"></span>
+                    <span class="btn-text-default">Create Account</span>
+                    <span class="btn-text-loading">Creating Account...</span>
+                </button>
+            </form>
+
+            <!-- Switch Back to Login -->
+            <div class="auth-switch-prompt">
+                Already have an account? 
+                <a href="{{ url_for('login') }}" class="auth-switch-link">Sign In</a>
+            </div>
+
+            <!-- Accessibility Note -->
+            <div class="auth-accessibility-note" role="note">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+                <span>Password hashing via Werkzeug with PBKDF2/SHA256 standards.</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="auth-footer">
+        <p>&copy; 2026 AccessAI — Intelligent Accessible Route Planning. Prioritizing accessibility, safety, and dignity.</p>
+    </footer>
+
+    <!-- Auth Script -->
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+</body>
+</html>
