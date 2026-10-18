@@ -3,6 +3,8 @@
 > **Google Maps-Style Wheelchair Accessible Navigation System**  
 > An independent navigation platform that prioritizes accessibility over pure distance: avoiding stairs, blocked paths, and rough surfaces while integrating community barrier reporting and AI-assisted photo classification.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/arjunkumar1325/access)
+
 ---
 
 ## ♿ Features
